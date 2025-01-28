@@ -1,34 +1,36 @@
 pipeline {
-    agent {
-        docker {
-            image 'maven:3.9.2-amazoncorretto-17-debian-bookworm'
-            args '-v /root/.m2:/root/.m2'
-        }
-    }
-environment {
-        MAVEN_OPTS = "-Dmaven.repo.local=/tmp/.m2/repository"
+    agent any
+    environment {
+        // Nom de l'image Docker à créer
+        DOCKER_IMAGE = 'mon-organisation/mon-application:latest'
     }
     stages {
-        stage('Build') {
+        stage('Cloner le code') {
             steps {
-                sh 'mvn -B -DskipTests clean package'
+                checkout scm
             }
         }
-        stage('Test') {
+        stage('Construire le jar') {
             steps {
-                sh 'mvn test'
+                sh './mvnw clean package -DskipTests' // Utilisez mvnw pour Maven Wrapper
             }
-            post {
-                always {
-                    junit 'target/surefire-reports/*.xml'
+        }
+        stage('Construire l\'image Docker') {
+            steps {
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
+                        sh """
+                        docker build -t ${DOCKER_IMAGE} .
+                        docker push ${DOCKER_IMAGE}
+                        """
+                    }
                 }
             }
         }
-
-        stage('Deliver') {
-            steps {
-                sh './jenkins/scripts/deliver.sh'
-            }
+    }
+    post {
+        always {
+            echo 'Pipeline terminé.'
         }
     }
 }

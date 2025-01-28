@@ -16,7 +16,7 @@ pipeline {
         }
         stage('Construire le projet Maven') {
             steps {
-                sh 'mvn clean package -DskipTests'
+                sh 'mvn clean package -DskipTests -f demo/pom.xml'
             }
         }
         stage('Construire l\'image Docker') {

@@ -2,24 +2,13 @@ pipeline {
     agent any
     environment {
         DOCKER_IMAGE = 'mon-organisation/mon-application:latest' // Nom de l'image Docker
-        DOCKER_REGISTRY = 'https://registry.hub.docker.com'       // URL du registre Docker
+        DOCKER_REGISTRY = 'https://registry.hub.docker.com'       // URL du registre Docker (Docker Hub par défaut)
         DOCKER_CREDENTIALS = 'docker-hub-credentials'            // ID des credentials Docker
     }
     stages {
         stage('Cloner le dépôt') {
             steps {
                 checkout scm
-            }
-        }
-        stage('Construire le JAR') {
-            steps {
-                script {
-                    if (!fileExists('./mvnw')) {
-                        echo "Maven Wrapper non trouvé, génération automatique."
-                        sh 'mvn -N io.takari:maven:wrapper'
-                    }
-                    sh './mvnw clean package -DskipTests'
-                }
             }
         }
         stage('Construire l\'image Docker') {

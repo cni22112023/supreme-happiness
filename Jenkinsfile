@@ -19,7 +19,7 @@ pipeline {
             steps {
                 script {
                     echo "Building Spring Boot project with Maven..."
-                    sh "mvn clean package"
+                    sh "mvn clean package -f demo/pom.xml"
                 }
             }
         }

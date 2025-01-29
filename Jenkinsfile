@@ -1,46 +1,55 @@
 pipeline {
     agent any
+
     environment {
-        DOCKER_IMAGE = 'votre-utilisateur/mon-application:latest' // Nom de l'image Docker
-        DOCKER_REGISTRY = 'https://registry.hub.docker.com'       // URL du registre Docker
-        DOCKER_CREDENTIALS = 'docker-hub-credentials'            // ID des credentials Docker
+        // Remplacez par vos credentials DockerHub
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+        DOCKER_IMAGE_NAME = "votre-utilisateur-dockerhub/mon-projet-spring"
+        DOCKER_IMAGE_TAG = "latest"
     }
-    tools {
-        maven 'Maven' // Utilise le Maven configuré dans Jenkins
-    }
+
     stages {
-        stage('Cloner le dépôt') {
-            steps {
-                checkout scm
-            }
-        }
-        stage('Construire le projet Maven') {
-            steps {
-                sh 'mvn clean package -DskipTests -f demo/pom.xml'
-            }
-        }
-        stage('Construire l\'image Docker') {
+        // Étape 1 : Build du projet Spring Boot avec Maven
+        stage('Build Spring Boot Project') {
             steps {
                 script {
-                    echo "Construction de l'image Docker : ${DOCKER_IMAGE}"
-                    sh "docker build -t ${DOCKER_IMAGE} demo"
+                    echo "Building Spring Boot project with Maven..."
+                    sh "mvn clean package"
                 }
             }
         }
-        stage('Pousser l\'image Docker') {
+
+        // Étape 2 : Construire l'image Docker
+        stage('Build Docker Image') {
             steps {
                 script {
-                    docker.withRegistry(DOCKER_REGISTRY, DOCKER_CREDENTIALS) {
-                        echo "Poussée de l'image Docker : ${DOCKER_IMAGE}"
-                        sh "docker push ${DOCKER_IMAGE}"
+                    echo "Building Docker image..."
+                    sh "docker build -t ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} ."
+                }
+            }
+        }
+
+        // Étape 3 : Pousser l'image Docker sur DockerHub
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    echo "Pushing Docker image to DockerHub..."
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                        sh "echo ${DOCKER_PASSWORD} | docker login -u ${DOCKER_USERNAME} --password-stdin"
+                        sh "docker push ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}"
                     }
                 }
             }
         }
     }
+
+    // Post-actions (optionnel)
     post {
-        always {
-            echo 'Pipeline terminé.'
+        success {
+            echo "Pipeline succeeded! Docker image pushed to DockerHub."
+        }
+        failure {
+            echo "Pipeline failed. Check the logs for more details."
         }
     }
 }

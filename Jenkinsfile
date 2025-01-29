@@ -8,6 +8,11 @@ pipeline {
         DOCKER_IMAGE_TAG = "latest"
     }
 
+    tools {
+        // Spécifiez la version de Maven configurée dans Jenkins
+        maven 'Maven 3.8.6'
+    }
+
     stages {
         // Étape 1 : Build du projet Spring Boot avec Maven
         stage('Build Spring Boot Project') {

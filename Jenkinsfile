@@ -23,7 +23,7 @@ pipeline {
             steps {
                 script {
                     echo "Construction de l'image Docker : ${DOCKER_IMAGE}"
-                    sh "docker build -t ${DOCKER_IMAGE} ."
+                    sh "docker build -t ${DOCKER_IMAGE} demo"
                 }
             }
         }
